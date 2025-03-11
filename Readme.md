@@ -1,21 +1,46 @@
 Copyright Szabo Andreea 2024-2025
 
-# TCP-UDP
+# TCP-UDP Relay
 
+This project is a client-server application designed to facilitate efficient and reliable message exchange over TCP and UDP protocols. It leverages I/O multiplexing using `select()` to manage multiple connections simultaneously, ensuring optimal performance.
 
-Am implementat o aplicatie care sa simuleze modelul client-server, folosind multiplexarea I/O realizata cu select().
+## **Key Features**
+- **Dual Protocol Support**: Handles both TCP and UDP communication for flexible message transmission.
+- **Subscription System**: Clients can subscribe or unsubscribe to specific topics to filter the messages they receive.
+- **Wildcard Support**: Advanced topic matching using `*` and `+` wildcards for dynamic subscription options.
+- **Efficient Message Handling**: Sends message length alongside the actual data to ensure efficient and accurate data transmission.
 
-Structuri folosite:
-- structura de mesaj udp pe care am folosit-o pentru a separa componentele mesajului primit, adica topicul, tipul de date si valoarea efectiva
-- structura de mesaj tcp care contine lungimea mesajului si mesajul efectiv, lungimea este retinuta pentru a nu trimite bytes in plus
-- structura de mesaj de comanda, care este folosita atunci cand un client tcp nou se conecteaza pentru a transmite serverului id-ul noului client, sau pentru comenzile de subscribe/unsubscribe, pentru a transmite topicul corespunzator catre server
+## **Components**
+- **Server**: Manages client connections, processes subscription commands, and forwards messages to subscribed clients.
+- **Subscriber (Client)**: Connects to the server, subscribes/unsubscribes to topics, and receives messages accordingly.
+- **Message Structures**:
+  - `udp_msg`: Used for parsing incoming UDP messages, separating the topic, type, and content.
+  - `tcp_msg`: Structures TCP messages with a length and data field to avoid redundant transmission.
+  - `command_message`: Manages client commands like subscription, unsubscription, and client identification.
 
+## **How It Works**
+1. **Server Initialization**: The server starts by initializing TCP and UDP sockets and begins listening for incoming client connections and messages.
+2. **Client Connection**:
+   - Clients connect via TCP, sending identification and subscription commands.
+   - UDP clients can send messages that the server then forwards to the appropriate TCP clients based on their subscriptions.
+3. **Subscription Management**:
+   - Clients can dynamically subscribe or unsubscribe from topics.
+   - The server maintains a list of active subscriptions and ensures that only relevant messages are forwarded.
+4. **Wildcard Matching**:
+   - Supports advanced topic matching using wildcards (`*` and `+`), enabling clients to subscribe to topic patterns dynamically.
+5. **Shutdown**:
+   - The server and clients can issue an `exit` command to terminate the connection gracefully.
 
-Functionalitatea aplicatiei:
-- este pornit serverul si apoi sunt deschisi 2 socketi, unul pentru tcp si unul pentru udp. Pentru a realiza acest lucru am folosit o parte din functia main din laboratorul 7, pe care am dublat-o pentru udp
-- apoi in server vad dacă am primit de la tastatura comanda exit, daca am primit un mesaj de la udp, daca s a conectat un client tcp sau daca am primit o comanda de la un client tcp.
-* pentru cazul in care primesc mesaj de la udp, verific care sunt clientii abonati si online si le trimit mesajul, trimitand mai intai lungimea si apoi mesajul, pentru eficienta.
-* pentru cazul cand se conecteaza un nou client tcp, verific dacă mai exista alt client cu acelasi id deja online si daca e, afisez un mesaj de eroare, altfel il adaug id ul in map urile respective
-* daca s-a primit o comanda de subscribe, adaug topicul in lista clientului daca nu era deja, iar la unsubscribe il scot. Pentru acest lucru, primesc un mesaj care contine topicul topicul cerut si verific daca actiunea ceruta de client se poate realiza
-- pentru clientul tcp, creez un socket pe care il leg la server. Daca primesc comanda exit ies din program, daca primesc comanda de subscribe, creez un mesaj prin care anunt serverul la ce topic vrea sa se aboneze, iar la unsubscribe trimit un mesaj cu topicul de la care vrea sa se dezaboneze
-- pentru wildcarduri, am facut cate un caz pentru 3 situatii: cand am doar +, doar *, sau combinate
+## **Usage**
+1. **Start the Server**
+```bash
+./server <PORT>
+```
+2. **Start a Subscriber Client**
+```bash
+./subscriber <ID> <IP_SERVER> <PORT>
+```
+3. **Client Commands**:
+   - `subscribe <TOPIC>` - Subscribe to a topic.
+   - `unsubscribe <TOPIC>` - Unsubscribe from a topic.
+   - `exit` - Exit the client application.
